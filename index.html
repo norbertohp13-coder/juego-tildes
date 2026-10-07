@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desafío Ortográfico: Batalla de Tildes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-shadow: #4338ca;
+            --secondary: #0ea5e9;
+            --secondary-shadow: #0284c7;
+            --success: #22c55e;
+            --success-shadow: #16a34a;
+            --danger: #f43f5e;
+            --danger-shadow: #e11d48;
+            --dark: #1e293b; 
+            --light: #f1f5f9;
+            --warning: #f59e0b; 
+            --purple: #a855f7;
+            --text-main: #334155; 
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Fredoka', sans-serif;
+            user-select: none; 
+        }
+
+        /* --- FONDO CLARO ANIMADO --- */
+        body {
+            background: linear-gradient(-45deg, #a78bfa, #818cf8, #38bdf8, #60a5fa);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* --- ENVOLTORIO PRINCIPAL (Para separar logos del cuadro) --- */
+        .app-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 750px;
+            gap: 20px; /* Separación entre los logos y el juego */
+        }
+
+        /* --- NUEVO PANEL DE LOGOS SUPERIOR --- */
+        .header-logos {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 50px; /* Separación entre los dos logos */
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95); /* Fondo blanco translúcido */
+            padding: 20px 40px;
+            border-radius: 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); /* Sombra elegante */
+            border: 2px solid rgba(255, 255, 255, 0.8);
+        }
+        
+        .logo-img {
+            max-height: 120px; /* Logos mucho más grandes */
+            width: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 5px rgba(0,0,0,0.05));
+        }
+
+        /* --- CONTENEDOR DEL JUEGO --- */
+        .container {
+            background: rgba(255, 255, 255, 0.85); 
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            border-radius: 30px;
+            width: 100%;
+            padding: 35px 30px; 
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15); 
+            text-align: center;
+            position: relative;
+        }
+
+        .screen { display: none; }
+        .screen.active { display: block; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.95) translateY(20px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* --- Textos --- */
+        h1 {
+            font-size: 2.8rem;
+            color: #4338ca; 
+            margin-bottom: 30px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        h2 { font-size: 1.8rem; margin-bottom: 20px; color: #1e293b; }
+
+        /* --- Botones --- */
+        .btn {
+            background: var(--primary);
+            color: white; border: none; padding: 16px 25px;
+            font-size: 1.3rem; font-weight: 700; border-radius: 16px;
+            cursor: pointer; width: 100%; max-width: 280px; margin: 10px;
+            box-shadow: 0 8px 0 var(--primary-shadow), 0 15px 20px rgba(0,0,0,0.1);
+            transition: all 0.1s; display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+        }
+
+        .btn:active { transform: translateY(8px); box-shadow: 0 0px 0 var(--primary-shadow); }
+        
+        .btn-battle { background: var(--purple); box-shadow: 0 8px 0 #7e22ce, 0 15px 20px rgba(0,0,0,0.1); }
+        .btn-battle:active { box-shadow: 0 0px 0 #7e22ce; }
+
+        .btn-study { background: var(--secondary); box-shadow: 0 8px 0 var(--secondary-shadow); }
+        .btn-study:active { box-shadow: 0 0px 0 var(--secondary-shadow); }
+
+        /* --- Inputs --- */
+        input[type="text"] {
+            width: 80%; max-width: 300px; padding: 15px;
+            font-size: 1.4rem; border-radius: 12px; border: 2px solid #cbd5e1;
+            background: white; color: var(--text-main); text-align: center;
+            outline: none; margin-bottom: 20px; font-weight: bold;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+        input[type="text"]:focus { border-color: var(--secondary); box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2); }
+        input[type="text"]::placeholder { color: #94a3b8; }
+
+        /* --- LEADERBOARD (Batalla) --- */
+        .leaderboard-track {
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;
+            background: #f1f5f9; padding: 12px; border-radius: 16px; margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .player-tag {
+            background: white; padding: 6px 12px; border-radius: 10px;
+            font-size: 0.95rem; display: flex; align-items: center; gap: 6px;
+            border: 2px solid transparent; transition: all 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .player-tag.is-me {
+            background: #e0e7ff;
+            border-color: var(--primary); font-weight: bold;
+            color: var(--primary-shadow);
+        }
+
+        .pos-badge {
+            background: var(--warning); color: white; padding: 2px 6px;
+            border-radius: 6px; font-weight: 800;
+        }
+
+        /* --- HUD y Progreso --- */
+        .hud {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #f8fafc; padding: 12px 25px; border-radius: 50px; margin-bottom: 15px; 
+            font-size: 1.2rem; font-weight: 700; border: 1px solid #e2e8f0;
+        }
+        .progress-container {
+            width: 100%; height: 12px; background: #e2e8f0;
+            border-radius: 20px; margin-bottom: 25px; overflow: hidden;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .progress-bar {
+            height: 100%; background: linear-gradient(90deg, #34d399, #10b981);
+            width: 0%; transition: width 0.4s; border-radius: 20px;
+        }
+
+        /* --- Opciones --- */
+        .options-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 20px;
+        }
+        .opt-btn {
+            background: white; color: var(--text-main); border: 2px solid #e2e8f0;
+            padding: 18px; font-size: 1.6rem; font-weight: 700; border-radius: 20px;
+            cursor: pointer; box-shadow: 0 6px 0 #cbd5e1; transition: transform 0.1s, background 0.1s;
+        }
+        .opt-btn:hover { background: #f8fafc; border-color: #cbd5e1; }
+        .opt-btn:active { transform: translateY(6px); box-shadow: 0 0px 0 #cbd5e1; }
+        
+        .opt-btn.correct { 
+            background: var(--success); color: white; border-color: var(--success);
+            box-shadow: 0 6px 0 var(--success-shadow); 
+        }
+        .opt-btn.wrong { 
+            background: var(--danger); color: white; border-color: var(--danger);
+            box-shadow: 0 6px 0 var(--danger-shadow); 
+        }
+
+        /* Resultados */
+        .score-display {
+            font-size: 5rem; font-weight: 700; margin: 10px 0; display: inline-block;
+            background: #f1f5f9; padding: 5px 30px; border-radius: 30px;
+            border: 2px solid #e2e8f0; color: #4338ca;
+        }
+        
+        .podium-msg {
+            font-size: 1.8rem; color: #f59e0b; margin-bottom: 10px; font-weight: 800;
+        }
+
+        /* Sección Estudiar */
+        .study-box {
+            background: #f8fafc; padding: 20px; border-radius: 15px; 
+            text-align: left; margin-bottom:20px; line-height: 1.6;
+            border: 1px solid #e2e8f0;
+        }
+        .study-box hr { border: 0; height: 1px; background: #e2e8f0; margin: 15px 0; }
+    </style>
+</head>
+<body>
+
+    <div class="app-wrapper">
+        
+        <!-- PANEL DE LOGOS (Fuera del contenedor del juego) -->
+        <div class="header-logos">
+            <img src="https://lalinea.salesianos.edu/colegio/wp-content/uploads/sites/2/2020/02/logocolecorazon-1.png" alt="Logo Colegio Salesianos" class="logo-img">
+            <img src="https://salesianos.info/estaestucasa/wp-content/uploads/sites/16/2026/06/casa-color-con-sombra-scaled.png" alt="Logo Empresa" class="logo-img">
+        </div>
+
+        <!-- CONTENEDOR PRINCIPAL DEL JUEGO -->
+        <div class="container">
+            
+            <!-- MENÚ PRINCIPAL -->
+            <div id="menu-screen" class="screen active">
+                <h1>El Desafío de las Tildes</h1>
+                <button class="btn" onclick="prepararJuego('clasico')">🟢 Modo Clásico</button>
+                <button class="btn btn-battle" onclick="mostrarPantalla('name-screen')">⚔️ Batalla de Bots</button>
+                <button class="btn btn-study" onclick="mostrarPantalla('study-screen')">📖 Estudiar</button>
+            </div>
+
+            <!-- PANTALLA NOMBRE (Solo Batalla) -->
+            <div id="name-screen" class="screen">
+                <h2>⚔️ Preparando la Batalla</h2>
+                <p style="margin-bottom: 20px; font-size: 1.2rem; color: #475569;">¿Cuál es tu nombre de jugador?</p>
+                <input type="text" id="player-name" placeholder="Ej: SuperProfe" maxlength="12" autocomplete="off">
+                <br>
+                <button class="btn btn-battle" onclick="prepararJuego('batalla')">¡Empezar Carrera!</button>
+                <button class="btn btn-study" onclick="mostrarPantalla('menu-screen')">Volver</button>
+            </div>
+
+            <!-- PANTALLA ESTUDIAR -->
+            <div id="study-screen" class="screen">
+                <h2>📚 Normas de Acentuación</h2>
+                <div class="study-box">
+                    <p><strong>Agudas:</strong> Última sílaba. Llevan tilde si acaban en Vocal, N o S.</p>
+                    <hr>
+                    <p><strong>Llanas:</strong> Penúltima sílaba. Tilde si NO acaban en Vocal, N o S.</p>
+                    <hr>
+                    <p><strong>Esdrújulas:</strong> Antepenúltima. ¡Siempre llevan tilde!</p>
+                </div>
+                <button class="btn btn-study" onclick="mostrarPantalla('menu-screen')">⬅️ Menú Inicial</button>
+            </div>
+
+            <!-- PANTALLA JUEGO -->
+            <div id="game-screen" class="screen">
+                
+                <div id="battle-leaderboard" class="leaderboard-track" style="display:none;"></div>
+
+                <div class="hud">
+                    <div>⭐ Aciertos: <span id="score-count" style="color: #f59e0b;">0</span></div>
+                    <div>📝 <span id="question-count">1</span>/12</div>
+                </div>
+                
+                <div class="progress-container">
+                    <div id="progress-bar" class="progress-bar"></div>
+                </div>
+                
+                <h2>Toca la palabra correcta:</h2>
+                <div id="options-container" class="options-grid"></div>
+            </div>
+
+            <!-- PANTALLA RESULTADOS -->
+            <div id="result-screen" class="screen">
+                <h2 style="color: #4338ca;">🏆 ¡Partida Terminada!</h2>
+                
+                <div id="podium-result" class="podium-msg" style="display:none;">¡Quedaste en 1º Lugar!</div>
+
+                <p style="font-size: 1.2rem; color: #64748b; margin-top:15px;">Tu nota sobre 10 es:</p>
+                <div id="final-score" class="score-display">10</div>
+                <div id="final-message" style="font-size: 1.5rem; font-weight: bold; margin-bottom: 25px; color:#334155;">¡Enhorabuena!</div>
+
+                <div>
+                    <button class="btn" onclick="reiniciarMismoModo()">🔄 Volver a Jugar</button>
+                    <button class="btn btn-study" onclick="mostrarPantalla('menu-screen')">🏠 Menú Inicial</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const bancoPalabras = [
+            // --- 80% CON TILDE ---
+            { correct: "camión", options: ["camion", "cámion", "camíon", "camión"] },
+            { correct: "árbol", options: ["arbol", "árbol", "arból"] },
+            { correct: "teléfono", options: ["telefono", "télefono", "teléfono", "telefóno"] },
+            { correct: "lápiz", options: ["lapiz", "lápiz", "lapíz"] },
+            { correct: "sofá", options: ["sofa", "sófa", "sofá"] },
+            { correct: "médico", options: ["medico", "médico", "medíco", "medicó"] },
+            { correct: "compás", options: ["compas", "cómpas", "compás"] },
+            { correct: "azúcar", options: ["azucar", "ázucar", "azúcar", "azucár"] },
+            { correct: "pájaro", options: ["pajaro", "pájaro", "pajáro", "pajaró"] },
+            { correct: "rápido", options: ["rapido", "rápido", "rapído", "rapidó"] },
+            { correct: "césped", options: ["cesped", "césped", "cespéd"] },
+            { correct: "éxito", options: ["exito", "éxito", "exíto", "exitó"] },
+            { correct: "música", options: ["musica", "música", "musíca", "musicá"] },
+            { correct: "sartén", options: ["sarten", "sárten", "sartén"] },
+            { correct: "inglés", options: ["ingles", "íngles", "inglés"] },
+            { correct: "ratón", options: ["raton", "ráton", "ratón"] },
+            { correct: "útil", options: ["util", "útil", "utíl"] },
+            { correct: "fácil", options: ["facil", "fácil", "facíl"] },
+            { correct: "difícil", options: ["dificil", "díficil", "difícil", "dificíl"] },
+            { correct: "cárcel", options: ["carcel", "cárcel", "carcél"] },
+            { correct: "héroe", options: ["heroe", "héroe", "heróe", "heroé"] },
+            { correct: "lágrima", options: ["lagrima", "lágrima", "lagríma", "lagrimá"] },
+            { correct: "semáforo", options: ["semaforo", "semáforo", "semafóro", "semaforó"] },
+            { correct: "plástico", options: ["plastico", "plástico", "plastíco", "plasticó"] },
+            { correct: "océano", options: ["oceano", "ócéano", "océano", "oceáno"] },
+            { correct: "trébol", options: ["trebol", "trébol", "treból"] },
+            { correct: "álbum", options: ["album", "álbum", "albúm"] },
+            { correct: "mármol", options: ["marmol", "mármol", "marmól"] },
+            { correct: "cráter", options: ["crater", "cráter", "cratér"] },
+            { correct: "dólar", options: ["dolar", "dólar", "dolár"] },
+            { correct: "dócil", options: ["docil", "dócil", "docíl"] },
+            { correct: "frágil", options: ["fragil", "frágil", "fragíl"] },
+
+            // --- 20% SIN TILDE ---
+            { correct: "reloj", options: ["reloj", "réloj", "relój"] },
+            { correct: "pared", options: ["pared", "páred", "paréd"] },
+            { correct: "papel", options: ["papel", "pápel", "papél"] },
+            { correct: "mesa", options: ["mesa", "mésa", "mesá"] },
+            { correct: "examen", options: ["examen", "éxamen", "exámen", "examén"] },
+            { correct: "joven", options: ["joven", "jóven", "jovén"] },
+            { correct: "margen", options: ["margen", "márgen", "margén"] },
+            { correct: "origen", options: ["origen", "órigen", "orígen", "origén"] },
+            { correct: "imagen", options: ["imagen", "ímagen", "imágen", "imagén"] },
+            { correct: "ventana", options: ["ventana", "véntana", "ventána", "ventaná"] }
+        ];
+
+        let palabrasDisponibles = [];
+        let partidaActual = [];
+        let indicePregunta = 0;
+        let bloqueado = false;
+
+        let modoActual = 'clasico';
+        let nombreUsuario = "Yo";
+        let jugadores = [];
+
+        function mostrarPantalla(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function mezclarArray(array) {
+            let arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function prepararJuego(modo) {
+            modoActual = modo;
+            if (modo === 'batalla') {
+                const input = document.getElementById('player-name').value.trim();
+                nombreUsuario = input !== "" ? input : "Estudiante";
+                generarBots();
+                document.getElementById('battle-leaderboard').style.display = 'flex';
+            } else {
+                jugadores = [{ nombre: nombreUsuario, puntos: 0, esUsuario: true }];
+                document.getElementById('battle-leaderboard').style.display = 'none';
+            }
+
+            if (palabrasDisponibles.length < 12) {
+                palabrasDisponibles = mezclarArray(bancoPalabras);
+            }
+            partidaActual = palabrasDisponibles.splice(0, 12);
+            
+            indicePregunta = 0;
+            bloqueado = false;
+
+            actualizarHUD();
+            if(modo === 'batalla') actualizarLeaderboard();
+            
+            mostrarPantalla('game-screen');
+            cargarPregunta();
+        }
+
+        function reiniciarMismoModo() {
+            prepararJuego(modoActual);
+        }
+
+        function generarBots() {
+            jugadores = [{ nombre: '😎 ' + nombreUsuario, puntos: 0, esUsuario: true }];
+            
+            const configBots = [
+                { nombre: '🤖 TildeCyborg', min: 9, max: 11 },
+                { nombre: '🥷 NinjaAcento', min: 8, max: 10 },
+                { nombre: '🤔 CapitánDuda', min: 6, max: 9 },
+                { nombre: '🥴 BotDespistado', min: 4, max: 7 }
+            ];
+
+            configBots.forEach(bot => {
+                let aciertosTotales = Math.floor(Math.random() * (bot.max - bot.min + 1)) + bot.min;
+                let respuestas = Array(12).fill(false);
+                for(let i=0; i<aciertosTotales; i++) respuestas[i] = true;
+                respuestas = mezclarArray(respuestas);
+
+                jugadores.push({
+                    nombre: bot.nombre,
+                    puntos: 0,
+                    esUsuario: false,
+                    historialRespuestas: respuestas 
+                });
+            });
+        }
+
+        function actualizarLeaderboard() {
+            jugadores.sort((a, b) => b.puntos - a.puntos);
+            
+            let html = '';
+            jugadores.forEach((jugador, index) => {
+                let claseExtra = jugador.esUsuario ? 'is-me' : '';
+                html += `
+                    <div class="player-tag ${claseExtra}">
+                        <span class="pos-badge">${index + 1}º</span>
+                        ${jugador.nombre} (${jugador.puntos})
+                    </div>
+                `;
+            });
+            document.getElementById('battle-leaderboard').innerHTML = html;
+        }
+
+        function actualizarHUD() {
+            document.getElementById('question-count').innerText = indicePregunta + 1;
+            let usuario = jugadores.find(j => j.esUsuario);
+            document.getElementById('score-count').innerText = usuario.puntos;
+            
+            const porcentaje = (indicePregunta / 12) * 100;
+            document.getElementById('progress-bar').style.width = porcentaje + '%';
+        }
+
+        function cargarPregunta() {
+            const palabra = partidaActual[indicePregunta];
+            const opciones = mezclarArray(palabra.options);
+            const contenedor = document.getElementById('options-container');
+            contenedor.innerHTML = ''; 
+
+            opciones.forEach(opcion => {
+                const btn = document.createElement('button');
+                btn.className = 'opt-btn';
+                btn.innerText = opcion;
+                btn.onclick = () => verificarRespuesta(btn, opcion, palabra.correct);
+                contenedor.appendChild(btn);
+            });
+        }
+
+        function verificarRespuesta(boton, elegida, correcta) {
+            if (bloqueado) return;
+            bloqueado = true;
+
+            const esCorrecta = (elegida === correcta);
+            let usuario = jugadores.find(j => j.esUsuario);
+
+            if (esCorrecta) {
+                boton.classList.add('correct');
+                usuario.puntos++;
+            } else {
+                boton.classList.add('wrong');
+                document.querySelectorAll('.opt-btn').forEach(b => {
+                    if (b.innerText === correcta) b.classList.add('correct');
+                });
+            }
+
+            if (modoActual === 'batalla') {
+                jugadores.forEach(j => {
+                    if (!j.esUsuario && j.historialRespuestas[indicePregunta] === true) {
+                        j.puntos++;
+                    }
+                });
+                actualizarLeaderboard();
+            }
+
+            actualizarHUD();
+
+            setTimeout(() => {
+                indicePregunta++;
+                if (indicePregunta < partidaActual.length) {
+                    cargarPregunta();
+                    actualizarHUD();
+                    bloqueado = false;
+                } else {
+                    document.getElementById('progress-bar').style.width = '100%';
+                    setTimeout(finalizarJuego, 500);
+                }
+            }, 1500);
+        }
+
+        function finalizarJuego() {
+            let usuario = jugadores.find(j => j.esUsuario);
+            let aciertos = usuario.puntos;
+            
+            let notaDecimal = (aciertos / 12) * 10;
+            notaDecimal = Math.round(notaDecimal * 10) / 10;
+            
+            const scoreDisplay = document.getElementById('final-score');
+            scoreDisplay.innerText = notaDecimal.toString().replace('.', ',');
+
+            let mensaje = ""; let color = "#4338ca";
+
+            if (notaDecimal <= 5) {
+                mensaje = "Repasa e inténtalo de nuevo 💡"; color = "var(--danger)";
+            } else if (notaDecimal > 5 && notaDecimal <= 7.5) {
+                mensaje = "Lo vas captando, pero aún puedes mejorar ¡Ánimo! 🚀"; color = "#d97706"; 
+            } else if (notaDecimal > 7.5 && notaDecimal < 10) {
+                mensaje = "Casi consigues el 10 ¡Ánimo! 🌟"; color = "#0284c7"; 
+            } else if (notaDecimal === 10) {
+                mensaje = "¡Enhorabuena! 👑"; color = "var(--success)"; 
+            }
+
+            document.getElementById('final-message').innerText = mensaje;
+            scoreDisplay.style.color = color;
+
+            const podiumMsg = document.getElementById('podium-result');
+            if (modoActual === 'batalla') {
+                jugadores.sort((a, b) => b.puntos - a.puntos);
+                let posicion = jugadores.findIndex(j => j.esUsuario) + 1;
+                
+                podiumMsg.innerText = `🏁 ¡Has quedado en ${posicion}º lugar!`;
+                podiumMsg.style.display = 'block';
+            } else {
+                podiumMsg.style.display = 'none';
+            }
+
+            mostrarPantalla('result-screen');
+        }
+    </script>
+</body>
+</html>
